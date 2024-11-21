@@ -34,15 +34,18 @@ def index():
         wickets = int(request.form['wickets'])
         last_five = int(request.form['last_five'])
 
-        balls_left = 120 - (overs * 6)
-        wickets_left = 10 - wickets
-        crr = current_score / overs
+        ball_left = 120 - (overs * 6)
+        wicket_left = 10 - wickets
+        current_run_rate = current_score / overs
 
         input_df = pd.DataFrame(
             {'batting_team': [batting_team], 'bowling_team': [bowling_team], 'city': [city], 
-             'current_score': [current_score], 'balls_left': [balls_left], 
-             'wickets_left': [wickets], 'crr': [crr], 'last_five': [last_five]}
+             'current_score': [current_score], 'ball_left': [ball_left], 
+             'wicket_left': [wicket_left], 'current_run_rate': [current_run_rate], 
+             'last_five': [last_five]}
         )
+
+        print(input_df.columns)  # Debug statement to print columns
 
         result = pipe.predict(input_df)
         prediction = int(result[0])
