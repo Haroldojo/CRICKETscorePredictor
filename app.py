@@ -1,12 +1,11 @@
-from flask import Flask, render_template, request
+import streamlit as st
 import pickle
 import pandas as pd
-
-app = Flask(__name__)
 
 # Load the model
 pipe = pickle.load(open('pipe.pkl', 'rb'))
 
+# Define teams and cities
 teams = [
     'Australia', 'India', 'Bangladesh', 'New Zealand', 'South Africa', 
     'England', 'West Indies', 'Afghanistan', 'Pakistan', 'Sri Lanka'
@@ -22,35 +21,31 @@ cities = [
     'Christchurch', 'Trinidad'
 ]
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    prediction = None
-    if request.method == 'POST':
-        batting_team = request.form['batting_team']
-        bowling_team = request.form['bowling_team']
-        city = request.form['city']
-        current_score = int(request.form['current_score'])
-        overs = float(request.form['overs'])
-        wickets = int(request.form['wickets'])
-        last_five = int(request.form['last_five'])
+st.title("Cricket Score Predictor")
 
-        ball_left = 120 - (overs * 6)
-        wicket_left = 10 - wickets
-        current_run_rate = current_score / overs
+# Input fields
+batting_team = st.selectbox("Select the batting team", sorted(teams))
+bowling_team = st.selectbox("Select the bowling team", sorted(teams))
+city = st.selectbox("Select the city", sorted(cities))
+current_score = st.number_input("Current Score", min_value=0, value=100)
+overs = st.number_input("Overs Completed", min_value=0.0, max_value=50.0, value=10.0)
+wickets = st.number_input("Wickets Fallen", min_value=0, max_value=10, value=2)
+last_five = st.number_input("Runs Scored in Last Five Overs", min_value=0, value=30)
 
-        input_df = pd.DataFrame(
-            {'batting_team': [batting_team], 'bowling_team': [bowling_team], 'city': [city], 
-             'current_score': [current_score], 'ball_left': [ball_left], 
-             'wicket_left': [wicket_left], 'current_run_rate': [current_run_rate], 
-             'last_five': [last_five]}
-        )
+if st.button("Predict Score"):
+    ball_left = 120 - (overs * 6)
+    wicket_left = 10 - wickets
+    current_run_rate = current_score / overs
 
-        print(input_df.columns)  # Debug statement to print columns
+    input_df = pd.DataFrame(
+        {'batting_team': [batting_team], 'bowling_team': [bowling_team], 'city': [city], 
+         'current_score': [current_score], 'ball_left': [ball_left], 
+         'wicket_left': [wicket_left], 'current_run_rate': [current_run_rate], 
+         'last_five': [last_five]}
+    )
 
-        result = pipe.predict(input_df)
-        prediction = int(result[0])
+    result = pipe.predict(input_df)
+    prediction = int(result[0])
 
-    return render_template('index.html', teams=sorted(teams), cities=sorted(cities), prediction=prediction)
+    st.write(f"Predicted Score: {prediction}")
 
-if __name__ == '__main__':
-    app.run(debug=True)
